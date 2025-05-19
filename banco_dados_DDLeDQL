@@ -142,6 +142,22 @@ CREATE TABLE relatorio (
     FOREIGN KEY (id_funcionario) REFERENCES funcionario(id_funcionario)
 );
 
+-- Consultas
+
+-- Selecionando todas as tabelas
+SELECT * FROM usuario;
+SELECT * FROM funcionario;
+SELECT * FROM endereco;
+SELECT * FROM agencia;
+SELECT * FROM auditoria;
+SELECT * FROM conta;
+SELECT * FROM conta_corrente;
+SELECT * FROM conta_investimento;
+SELECT * FROM conta_poupanca;
+SELECT * FROM relatorio;
+SELECT * FROM transacao;
+
+
 -- Gatilhos
 
 -- Atualização de Saldo
@@ -237,3 +253,6 @@ JOIN conta c ON t.id_conta_origem = c.id_conta
 JOIN cliente cl ON c.id_cliente = cl.id_cliente
 JOIN usuario u ON cl.id_usuario = u.id_usuario
 WHERE t.data_hora >= NOW() - INTERVAL 90 DAY;
+
+SELECT * FROM vw_resumo_contas;
+SELECT * FROM vw_movimentacoes_recentes;
