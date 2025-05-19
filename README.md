@@ -64,6 +64,18 @@ Desenvolver uma aplicação bancária a qual é capaz de gerenciar contas, funci
 - **Procedures**: Gerar OTP, Calcular Score de Crédito.
 - **Visões**: Resumo de Contas por Cliente, Movimentações Recentes.
 
+### Modelagem Conceitual
+
+![Modelo Conceitual](assets/modelagem-conceitual.png)
+
+### Modelagem Lógica
+
+![Modelo Lógico](assets/modelagem-logica.png)
+
+### Diagrama de Classes
+
+![Diagrama de Classes](assets/diagrama-de-classes.png)
+
 ---
 
 ## Relatórios
