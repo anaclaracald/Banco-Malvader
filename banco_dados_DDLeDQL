@@ -260,6 +260,7 @@ SELECT * FROM relatorio;
 -- Consulta de Dados
 -- Submenu
 
+-- Visao detalhes da conta
 CREATE VIEW vw_detalhes_conta AS
 SELECT
     c.id_conta,
@@ -272,7 +273,7 @@ SELECT
     c.saldo AS saldo_atual,
     c.status AS status_conta,
     c.data_abertura,
-    -- Campos específicos de Conta Corrente
+
     cc.limite AS limite_disponivel_cc,
     cc.data_vencimento AS data_vencimento_cc,
     cc.taxa_manutencao AS taxa_manutencao_cc,
@@ -297,7 +298,7 @@ LEFT JOIN
 LEFT JOIN
     conta_investimento ci ON c.id_conta = ci.id_conta AND c.tipo_conta = 'INVESTIMENTO';
 
--- 2. Visão para Detalhes do Funcionário
+-- Visao detalhes funcionario
 CREATE VIEW vw_detalhes_funcionario AS
 SELECT
     f.id_funcionario,
@@ -322,7 +323,7 @@ LEFT JOIN
 LEFT JOIN
     usuario sup_u ON sup_f.id_usuario = sup_u.id_usuario;
 
--- 3. Visão para Detalhes do Cliente
+-- Visao detalhes cliente
 CREATE VIEW vw_detalhes_cliente AS
 SELECT
     cl.id_cliente,
@@ -343,7 +344,6 @@ LEFT JOIN
     endereco e ON u.id_usuario = e.id_usuario;
 
 CREATE VIEW vw_extrato_conta_recente AS
--- Transações onde a conta é a ORIGEM (SAÍDAS ou DEPÓSITOS/RENDIMENTOS na própria conta)
 SELECT
     t.id_transacao,
     t.id_conta_origem AS id_conta_referencia,
@@ -359,7 +359,7 @@ SELECT
     END AS tipo_movimento,
     t.valor,
     t.descricao,
-    c_dest.numero_conta AS numero_conta_outra_parte, -- Destino da transferência, ou NULL
+    c_dest.numero_conta AS numero_conta_outra_parte, 
     u_dest.nome AS nome_cliente_outra_parte
 FROM
     transacao t
@@ -376,7 +376,6 @@ WHERE
 
 UNION ALL
 
--- Transações onde a conta é o DESTINO (ENTRADAS por transferência)
 SELECT
     t.id_transacao,
     t.id_conta_destino AS id_conta_referencia,
@@ -405,11 +404,8 @@ WHERE
     AND t.data_hora >= NOW() - INTERVAL 90 DAY;
 
 
--- Consultando as visões existentes
 SELECT * FROM vw_resumo_contas LIMIT 5;
 SELECT * FROM vw_movimentacoes_recentes LIMIT 5;
-
--- Consultando as novas visões (exemplos)
 SELECT * FROM vw_detalhes_conta LIMIT 5;
 SELECT * FROM vw_detalhes_funcionario LIMIT 5;
 SELECT * FROM vw_detalhes_cliente LIMIT 5;
