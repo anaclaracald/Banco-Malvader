@@ -2,7 +2,9 @@ package com.BancoMalvader.model;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
@@ -10,6 +12,8 @@ import java.time.LocalDateTime;
 @Entity
 @Setter
 @Getter
+@NoArgsConstructor
+@AllArgsConstructor
 public class Auditoria {
     @Id
     private int idAuditoria;
@@ -17,14 +21,6 @@ public class Auditoria {
     private LocalDateTime dataHora;
     private String detalhes;
     private int idUsuario;
-
-    public Auditoria(int idAuditoria, String acao, LocalDateTime dataHora, String detalhes, int idUsuario) {
-        this.idAuditoria = idAuditoria;
-        this.acao = acao;
-        this.dataHora = dataHora;
-        this.detalhes = detalhes;
-        this.idUsuario = idUsuario;
-    }
 
     public void registrarAuditoria() {
         // lógica

@@ -1,7 +1,9 @@
 package com.BancoMalvader.model.Conta;
 
 import jakarta.persistence.GeneratedValue;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.data.annotation.Id;
 
@@ -10,6 +12,8 @@ import java.time.LocalDateTime;
 
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public abstract class Conta {
     @Id
     @GeneratedValue
@@ -21,17 +25,6 @@ public abstract class Conta {
     protected String status;
     protected int idAgencia;
     protected int idCliente;
-
-    public Conta(int idConta, String numeroConta, BigDecimal saldo, String tipoConta, LocalDateTime dataAbertura, String status, int idAgencia, int idCliente) {
-        this.idConta = idConta;
-        this.numeroConta = numeroConta;
-        this.saldo = saldo;
-        this.tipoConta = tipoConta;
-        this.dataAbertura = dataAbertura;
-        this.status = status;
-        this.idAgencia = idAgencia;
-        this.idCliente = idCliente;
-    }
 
     public void abrirConta() {
         // lógica

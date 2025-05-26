@@ -1,7 +1,9 @@
 package com.BancoMalvader.model.Usuario;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.data.annotation.Id;
 
@@ -10,6 +12,8 @@ import java.time.LocalDateTime;
 @Entity
 @Setter
 @Getter
+@AllArgsConstructor
+@NoArgsConstructor
 public class Funcionario extends Usuario{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -19,14 +23,6 @@ public class Funcionario extends Usuario{
     @Enumerated(EnumType.STRING)
     private Cargo cargo;
     private Integer idSupervisor;
-
-    public Funcionario(int idUsuario, String nome, String cpf, String dataNascimento, String telefone, String tipoUsuario, String senhaHash, String otpAtivo, LocalDateTime otpExpiracao, int idFuncionario, String codigoFuncionario, Cargo cargo, Integer idSupervisor) {
-        super(idUsuario, nome, cpf, dataNascimento, telefone, tipoUsuario, senhaHash, otpAtivo, otpExpiracao);
-        this.idFuncionario = idFuncionario;
-        this.codigoFuncionario = codigoFuncionario;
-        this.cargo = cargo;
-        this.idSupervisor = idSupervisor;
-    }
 
     public void cadastrarFuncionario() {
         // Cadastro com permissão

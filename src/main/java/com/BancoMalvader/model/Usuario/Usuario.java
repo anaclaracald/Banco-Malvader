@@ -2,12 +2,17 @@ package com.BancoMalvader.model.Usuario;
 
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
 
-@Getter @Setter
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
 public abstract class Usuario {
     @Id @GeneratedValue
     protected int idUsuario;
@@ -19,16 +24,4 @@ public abstract class Usuario {
     protected String senhaHash;
     protected String otpAtivo;
     protected LocalDateTime otpExpiracao;
-
-    public Usuario(int idUsuario, String nome, String cpf, String dataNascimento, String telefone, String tipoUsuario, String senhaHash, String otpAtivo, LocalDateTime otpExpiracao) {
-        this.idUsuario = idUsuario;
-        this.nome = nome;
-        this.cpf = cpf;
-        this.dataNascimento = dataNascimento;
-        this.telefone = telefone;
-        this.tipoUsuario = tipoUsuario;
-        this.senhaHash = senhaHash;
-        this.otpAtivo = otpAtivo;
-        this.otpExpiracao = otpExpiracao;
-    }
 }
