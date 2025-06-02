@@ -18,7 +18,7 @@ Desenvolver uma aplicação bancária a qual é capaz de gerenciar contas, funci
 ## Tecnologias Utilizadas
 
 - **Linguagem**: Java e SQL
-- **Interface Gráfica**: React
+- **Interface Gráfica**: JavaFX
 - **Banco de Dados**: MySQL
 - **Arquitetura**: MVC (Model-View-Controller)
 - **Conexão DB**: JDBC
@@ -115,7 +115,7 @@ Este projeto está licenciado sob a licença MIT - veja o arquivo LICENSE para d
 ## Equipe
 
 - Alice Ferreira (UC)
-- Ana Clara Ferreira (UC)
+- Ana Clara Ferreira (UC24101888)
 - Bárbara Dantas (UC24101492)
 - Professor Orientador: William Roberto Malvezzi
 - Universidade Católica de Brasília    
