@@ -161,7 +161,6 @@ CREATE TABLE conta_encerramento_historico (
 
 -- Atualização de Saldo
 DELIMITER $$
-DROP TRIGGER IF EXISTS atualizar_saldo;
 CREATE TRIGGER atualizar_saldo AFTER INSERT ON transacao
 FOR EACH ROW
 BEGIN
@@ -187,7 +186,6 @@ DELIMITER ;
 
 -- Validação de Senha (Trigger apenas como lembrete, a lógica principal está na Stored Procedure)
 DELIMITER $$
-DROP TRIGGER IF EXISTS validar_senha;
 CREATE TRIGGER validar_senha BEFORE UPDATE ON usuario
 FOR EACH ROW
 BEGIN
@@ -210,7 +208,6 @@ DELIMITER ;
 
 -- Limite de Depósito Diário
 DELIMITER $$
-DROP TRIGGER IF EXISTS limite_deposito_cliente;
 CREATE TRIGGER limite_deposito_cliente BEFORE INSERT ON transacao
 FOR EACH ROW
 BEGIN
@@ -239,7 +236,6 @@ DELIMITER ;
 
 -- Registrar abertura de conta em auditoria (RF2.1)
 DELIMITER $$
-DROP TRIGGER IF EXISTS auditar_abertura_conta;
 CREATE TRIGGER auditar_abertura_conta AFTER INSERT ON conta
 FOR EACH ROW
 BEGIN
@@ -263,7 +259,6 @@ DELIMITER ;
 
 -- Gatilho pra limite de funcionarios por agencia (RF2.5)
 DELIMITER $$
-DROP TRIGGER IF EXISTS verificar_limite_funcionarios_agencia;
 CREATE TRIGGER verificar_limite_funcionarios_agencia BEFORE INSERT ON funcionario
 FOR EACH ROW
 BEGIN
@@ -282,7 +277,6 @@ DELIMITER ;
 
 -- Gatilho pra taxa de saques excessivos (RF3.1)
 DELIMITER $$
-DROP TRIGGER IF EXISTS aplicar_taxa_saque_excessivo;
 CREATE TRIGGER aplicar_taxa_saque_excessivo AFTER INSERT ON transacao
 FOR EACH ROW
 BEGIN
@@ -324,7 +318,6 @@ DELIMITER ;
 
 -- Gerar OTP
 DELIMITER $$
-DROP PROCEDURE IF EXISTS gerar_otp;
 CREATE PROCEDURE gerar_otp(IN p_id_usuario INT, OUT p_novo_otp VARCHAR(6))
 BEGIN
     SET p_novo_otp = LPAD(FLOOR(RAND() * 1000000), 6, '0');
@@ -336,7 +329,6 @@ DELIMITER ;
 
 -- Calcular Score de Crédito
 DELIMITER $$
-DROP PROCEDURE IF EXISTS calcular_score_credito;
 CREATE PROCEDURE calcular_score_credito(IN p_id_cliente INT)
 BEGIN
     DECLARE v_total_trans DECIMAL(15,2) DEFAULT 0;
@@ -357,7 +349,6 @@ DELIMITER ;
 
 -- Encerrar conta cliente (RF2.2)
 DELIMITER $$
-DROP PROCEDURE IF EXISTS encerrar_conta_cliente;
 CREATE PROCEDURE encerrar_conta_cliente(IN p_id_conta INT, IN p_id_funcionario_responsavel INT, IN p_motivo TEXT)
 BEGIN
     DECLARE v_saldo DECIMAL(15,2);
@@ -392,7 +383,6 @@ DELIMITER ;
 
 -- Atualizar senha do usuario com validacao (RNF3 e RF2.4)
 DELIMITER $$
-DROP PROCEDURE IF EXISTS atualizar_senha_usuario;
 CREATE PROCEDURE atualizar_senha_usuario(IN p_id_usuario INT, IN p_nova_senha_texto_plano VARCHAR(255))
 BEGIN
     DECLARE v_senha_valida BOOLEAN DEFAULT FALSE;
@@ -424,7 +414,6 @@ DELIMITER ;
 
 -- Procedure pra tentativa de login (RF1.3)
 DELIMITER $$
-DROP PROCEDURE IF EXISTS registrar_tentativa_login;
 CREATE PROCEDURE registrar_tentativa_login(IN p_cpf_tentativa VARCHAR(11), IN p_sucesso BOOLEAN, IN p_info_adicional TEXT)
 BEGIN
     DECLARE v_id_usuario_tentativa INT DEFAULT NULL;
@@ -447,7 +436,7 @@ DELIMITER ;
 -- Visões (Views)
 
 -- Visão Resumo de Contas por Cliente
-CREATE OR REPLACE VIEW vw_resumo_contas AS
+CREATE  VIEW vw_resumo_contas AS
 SELECT
     c.id_cliente,
     u.nome AS nome_cliente,
@@ -461,7 +450,7 @@ LEFT JOIN conta co ON c.id_cliente = co.id_cliente
 GROUP BY c.id_cliente, u.nome, u.cpf;
 
 -- Visão Movimentações Recentes
-CREATE OR REPLACE VIEW vw_movimentacoes_recentes AS
+CREATE VIEW vw_movimentacoes_recentes AS
 SELECT
     t.id_transacao,
     t.data_hora,
@@ -480,7 +469,7 @@ WHERE t.data_hora >= NOW() - INTERVAL 90 DAY
 ORDER BY t.data_hora DESC;
 
 -- Visão detalhes da conta (RF2.3)
-CREATE OR REPLACE VIEW vw_detalhes_conta AS
+CREATE VIEW vw_detalhes_conta AS
 SELECT
     c.id_conta,
     c.numero_conta,
@@ -517,7 +506,7 @@ LEFT JOIN conta_poupanca cp ON c.id_conta = cp.id_conta AND c.tipo_conta = 'POUP
 LEFT JOIN conta_investimento ci ON c.id_conta = ci.id_conta AND c.tipo_conta = 'INVESTIMENTO';
 
 -- Visão detalhes do funcionario (RF2.3)
-CREATE OR REPLACE VIEW vw_detalhes_funcionario AS
+CREATE VIEW vw_detalhes_funcionario AS
 SELECT
     f.id_funcionario,
     f.codigo_funcionario,
@@ -539,7 +528,7 @@ LEFT JOIN funcionario sup_f ON f.id_supervisor = sup_f.id_funcionario
 LEFT JOIN usuario sup_u ON sup_f.id_usuario = sup_u.id_usuario;
 
 -- Visão detalhes do cliente (RF2.3)
-CREATE OR REPLACE VIEW vw_detalhes_cliente AS
+CREATE VIEW vw_detalhes_cliente AS
 SELECT
     cl.id_cliente,
     u.nome AS nome_cliente,
@@ -555,7 +544,7 @@ FROM cliente cl
 JOIN usuario u ON cl.id_usuario = u.id_usuario;
 
 -- Visão pro relatorio de movimentacoes detalhadas (RF2.6)
-CREATE OR REPLACE VIEW vw_relatorio_movimentacoes_detalhadas AS
+CREATE VIEW vw_relatorio_movimentacoes_detalhadas AS
 SELECT
     t.id_transacao,
     DATE_FORMAT(t.data_hora, '%d/%m/%Y %H:%i:%s') AS data_hora_transacao,
@@ -583,7 +572,7 @@ LEFT JOIN agencia ag_dest ON co_dest.id_agencia = ag_dest.id_agencia
 ORDER BY t.data_hora DESC;
 
 -- Visão pro relatorio de caso de inadimplencia (RF2.6)
-CREATE OR REPLACE VIEW vw_relatorio_inadimplencia AS
+CREATE VIEW vw_relatorio_inadimplencia AS
 SELECT
     u.nome AS nome_cliente,
     u.cpf AS cpf_cliente,
@@ -608,7 +597,7 @@ WHERE c.status = 'ATIVA' AND (c.saldo < 0 OR (c.tipo_conta = 'CORRENTE' AND c.sa
 ORDER BY u.nome, c.numero_conta;
 
 -- Visão pro relatorio de desempenho dos funcionarios (RF2.6)
-CREATE OR REPLACE VIEW vw_relatorio_desempenho_funcionarios AS
+CREATE VIEW vw_relatorio_desempenho_funcionarios AS
 SELECT
     f.id_funcionario,
     u.nome AS nome_funcionario,
