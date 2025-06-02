@@ -72,7 +72,7 @@ banco_malvader/
 │
 ├── 
 ├── 
-└── README.md // Descrição do projeto
+└── README.md 
 ```
 
 ---
