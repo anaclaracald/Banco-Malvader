@@ -30,7 +30,49 @@ Desenvolver uma aplicação bancária a qual é capaz de gerenciar contas, funci
 ## Estrutura do Projeto
 
 ```
-*ainda a organizar
+banco_malvader/
+├── src/
+│   ├── main/
+│   │   ├── java/
+│   │   │   └── com/
+│   │   │       └── package/  
+│   │   │           ├── controller/
+│   │   │           │   ├── 
+│   │   │           │   └── 
+│   │   │           │
+│   │   │           ├── dao/
+│   │   │           │   ├── 
+│   │   │           │   ├── impl/ 
+│   │   │           │   │   └── 
+│   │   │           │   └── 
+│   │   │           │
+│   │   │           ├── model/
+│   │   │           │   ├── 
+│   │   │           │   └── 
+│   │   │           │
+│   │   │           ├── util/
+│   │   │           │   ├── 
+│   │   │           │   ├── 
+│   │   │           │   └── 
+│   │   │           │
+│   │   │           └── view/
+│   │   │               ├── 
+│   │   │               ├── componentes/ 
+│   │   │               │   └── 
+│   │   │               └── 
+│   │   │
+│   │   └── resources/
+│   │       ├── 
+│   │       ├── 
+│   │       └── 
+│
+├── lib/ 
+│   ├── 
+│   └── 
+│
+├── 
+├── 
+└── README.md // Descrição do projeto
 ```
 
 ---
