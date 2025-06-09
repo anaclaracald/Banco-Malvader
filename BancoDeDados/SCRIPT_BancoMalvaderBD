@@ -55,11 +55,11 @@ CREATE TABLE agencia (
     id_agencia INT AUTO_INCREMENT PRIMARY KEY,
     nome VARCHAR(50) NOT NULL,
     codigo_agencia VARCHAR(10) UNIQUE NOT NULL,
-    endereco_id INT UNIQUE NOT NULL, -- cada agencia tem um endereço único
+    endereco_id INT UNIQUE NOT NULL, -- cada agencia tem um endereço unico
     FOREIGN KEY (endereco_id) REFERENCES endereco(id_endereco)
 );
 
--- FK de funcionario para agencia
+-- FK de funcionario para agencia, amarracao de funcionario com agencia
 ALTER TABLE funcionario
 ADD CONSTRAINT FK_funcionario_agencia
 FOREIGN KEY (id_agencia) REFERENCES agencia(id_agencia);
@@ -139,7 +139,7 @@ CREATE TABLE auditoria (
 -- Tabela relatorio
 CREATE TABLE relatorio (
     id_relatorio INT AUTO_INCREMENT PRIMARY KEY,
-    id_funcionario INT NOT NULL, -- Funcionário que gerou o relatório
+    id_funcionario INT NOT NULL, -- funcionario que gerou o relatorio
     tipo_relatorio VARCHAR(50) NOT NULL,
     data_geracao TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     conteudo LONGTEXT NOT NULL,
@@ -150,7 +150,7 @@ CREATE TABLE relatorio (
 CREATE TABLE conta_encerramento_historico (
     id_encerramento INT AUTO_INCREMENT PRIMARY KEY,
     id_conta INT NOT NULL,
-    id_funcionario_responsavel INT, -- Funcionário que processou o encerramento
+    id_funcionario_responsavel INT, -- funcionario que encerrou a conta
     motivo TEXT NOT NULL,
     data_encerramento TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (id_conta) REFERENCES conta(id_conta),
@@ -184,27 +184,17 @@ BEGIN
 END $$
 DELIMITER ;
 
--- Validação de Senha (Trigger apenas como lembrete, a lógica principal está na Stored Procedure)
+-- Gatilho seguro para validação de senha assegurando a acao via Procedure
 DELIMITER $$
 CREATE TRIGGER validar_senha BEFORE UPDATE ON usuario
 FOR EACH ROW
 BEGIN
-    -- Este trigger serve como um lembrete de que as senhas devem ser gerenciadas
-    -- pela procedure `atualizar_senha_usuario` que contém a lógica de validação de força.
-    -- A Stored Procedure é o ponto de controle recomendado para alterações de senha.
-    -- Se uma tentativa de UPDATE direto ocorrer no campo senha_hash sem passar pela procedure,
-    -- e você quiser bloqueá-la aqui, você pode adicionar:
-    -- IF OLD.senha_hash != NEW.senha_hash AND (SELECT @BYPASS_SENHA_TRIGGER IS NULL OR @BYPASS_SENHA_TRIGGER = 0) THEN
-    --    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Alteração de senha deve ser feita via procedure apropriada.';
-    -- END IF;
-    -- A variável de sessão @BYPASS_SENHA_TRIGGER poderia ser setada pela procedure.
-    -- Por simplicidade, a confiança é depositada na disciplina de uso da procedure.
-    -- Nenhuma ação de bloqueio explícita aqui para evitar complexidade desnecessária
-    -- se a procedure for sempre usada.
-    DECLARE dummy INT;
+    IF OLD.senha_hash != NEW.senha_hash THEN
+        SIGNAL SQLSTATE '45000' 
+        SET MESSAGE_TEXT = 'ERRO: A alteração de senha deve ser feita por meio da procedure "atualizar_senha_usuario".';
+    END IF;
 END $$
 DELIMITER ;
-
 
 -- Limite de Depósito Diário
 DELIMITER $$
@@ -240,7 +230,6 @@ CREATE TRIGGER auditar_abertura_conta AFTER INSERT ON conta
 FOR EACH ROW
 BEGIN
     DECLARE v_id_usuario_funcionario INT DEFAULT NULL;
-    -- Tenta obter o id_usuario do funcionário que abriu a conta
     IF NEW.id_funcionario_abertura IS NOT NULL THEN
         SELECT id_usuario INTO v_id_usuario_funcionario
         FROM funcionario WHERE id_funcionario = NEW.id_funcionario_abertura;
@@ -268,8 +257,8 @@ BEGIN
         FROM funcionario
         WHERE id_agencia = NEW.id_agencia;
 
-        IF total_funcionarios_agencia >= 20 THEN
-            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Limite de funcionários por agência (20) excedido.';
+        IF total_funcionarios_agencia > 20 THEN
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Limite de funcionários por agência excedido.';
         END IF;
     END IF;
 END $$
@@ -302,7 +291,6 @@ BEGIN
             INNER JOIN cliente cl ON co.id_cliente = cl.id_cliente
             WHERE co.id_conta = v_id_conta_cliente;
 
-            -- Insere a transação de taxa. O gatilho 'atualizar_saldo' cuidará da dedução.
             INSERT INTO transacao (id_conta_origem, tipo_transacao, valor, descricao)
             VALUES (v_id_conta_cliente, 'TAXA', taxa_saque_excessivo, CONCAT('Taxa por saque excessivo (', num_saques_mes, 'º saque no mês)'));
             
@@ -334,11 +322,10 @@ BEGIN
     DECLARE v_total_trans DECIMAL(15,2) DEFAULT 0;
     DECLARE v_media_trans DECIMAL(15,2) DEFAULT 0;
 
-    -- A SP original do SRS usava SUM(valor) e AVG(valor) com base em transações de DEPÓSITO e SAQUE na conta de origem do cliente.
     SELECT COALESCE(SUM(t.valor),0), COALESCE(AVG(t.valor),0)
     INTO v_total_trans, v_media_trans
     FROM transacao t
-    INNER JOIN conta c ON t.id_conta_origem = c.id_conta -- A conta de origem é a conta do cliente para estas transações
+    INNER JOIN conta c ON t.id_conta_origem = c.id_conta 
     WHERE c.id_cliente = p_id_cliente AND t.tipo_transacao IN ('DEPOSITO', 'SAQUE');
 
     UPDATE cliente
@@ -347,7 +334,7 @@ BEGIN
 END $$
 DELIMITER ;
 
--- Encerrar conta cliente (RF2.2)
+-- Encerrar conta do cliente (RF2.2)
 DELIMITER $$
 CREATE PROCEDURE encerrar_conta_cliente(IN p_id_conta INT, IN p_id_funcionario_responsavel INT, IN p_motivo TEXT)
 BEGIN
@@ -360,10 +347,9 @@ BEGIN
     IF v_status_conta IS NULL THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Conta não encontrada.';
     ELSEIF v_status_conta != 'ATIVA' THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Conta não está ativa. Não pode ser encerrada novamente.';
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'A conta não está ativa. Logo, não pode ser encerrada novamente.';
     ELSEIF v_saldo < 0 THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Não é possível encerrar conta com saldo negativo.';
-    -- Adicionar outras verificações de dívidas pendentes aqui, se necessário.
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Não é possível encerrar a conta com o saldo negativo.';
     ELSE
         UPDATE conta SET status = 'ENCERRADA' WHERE id_conta = p_id_conta;
 
