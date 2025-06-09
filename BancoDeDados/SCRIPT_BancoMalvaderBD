@@ -19,7 +19,7 @@ CREATE TABLE usuario (
 CREATE TABLE funcionario (
     id_funcionario INT AUTO_INCREMENT PRIMARY KEY,
     id_usuario INT UNIQUE NOT NULL, 
-    codigo_funcionario VARCHAR(20) UNIQUE NOT NULL, 
+    codigo_funcionario VARCHAR(20) UNIQUE NOT NULL, -- RF2.5 (UNIQUE)
     cargo ENUM('ESTAGIARIO', 'ATENDENTE', 'GERENTE') NOT NULL,
     id_supervisor INT,
     id_agencia INT, -- RF2.5
@@ -67,7 +67,7 @@ FOREIGN KEY (id_agencia) REFERENCES agencia(id_agencia);
 -- Tabela conta
 CREATE TABLE conta (
     id_conta INT AUTO_INCREMENT PRIMARY KEY,
-    numero_conta VARCHAR(20) UNIQUE NOT NULL,
+    numero_conta VARCHAR(20) UNIQUE NOT NULL, -- (RF2.1) o UNIQUE ajuda a armazenar corretamente
     id_agencia INT NOT NULL,
     saldo DECIMAL(15,2) NOT NULL DEFAULT 0,
     tipo_conta ENUM('POUPANCA', 'CORRENTE', 'INVESTIMENTO') NOT NULL,
@@ -115,7 +115,7 @@ CREATE TABLE transacao (
     id_transacao INT AUTO_INCREMENT PRIMARY KEY,
     id_conta_origem INT, 
     id_conta_destino INT, 
-    tipo_transacao ENUM('DEPOSITO', 'SAQUE', 'TRANSFERENCIA', 'TAXA', 'RENDIMENTO', 'PAGAMENTO_FATURA') NOT NULL,
+    tipo_transacao ENUM('DEPOSITO', 'SAQUE', 'TRANSFERENCIA', 'TAXA', 'RENDIMENTO', 'PAGAMENTO_FATURA') NOT NULL, -- cooperacao para RF3.1
     valor DECIMAL(15,2) NOT NULL,
     data_hora TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     descricao VARCHAR(100),
@@ -159,7 +159,7 @@ CREATE TABLE conta_encerramento_historico (
 
 -- Gatilhos (Triggers)
 
--- Atualização de Saldo
+-- Atualização de Saldo (RF3.1)
 DELIMITER $$
 CREATE TRIGGER atualizar_saldo AFTER INSERT ON transacao
 FOR EACH ROW
@@ -196,7 +196,7 @@ BEGIN
 END $$
 DELIMITER ;
 
--- Limite de Depósito Diário
+-- Limite de depósito diario (RF3.1)
 DELIMITER $$
 CREATE TRIGGER limite_deposito_cliente BEFORE INSERT ON transacao
 FOR EACH ROW
@@ -264,7 +264,7 @@ BEGIN
 END $$
 DELIMITER ;
 
--- Gatilho pra taxa de saques excessivos (RF3.1)
+-- Gatilho pra taxar saques excessivos (RF3.1)
 DELIMITER $$
 CREATE TRIGGER aplicar_taxa_saque_excessivo AFTER INSERT ON transacao
 FOR EACH ROW
@@ -304,7 +304,7 @@ DELIMITER ;
 
 -- Procedimentos Armazenados (Stored Procedures)
 
--- Gerar OTP
+-- Gerar OTP (RF1.2)
 DELIMITER $$
 CREATE PROCEDURE gerar_otp(IN p_id_usuario INT, OUT p_novo_otp VARCHAR(6))
 BEGIN
@@ -331,6 +331,29 @@ BEGIN
     UPDATE cliente
     SET score_credito = LEAST(100.00, (v_total_trans / 1000.00) + (v_media_trans / 100.00))
     WHERE id_cliente = p_id_cliente;
+END $$
+DELIMITER ;
+
+-- Procedure para calculo de metricas de relatorio por cliente
+DELIMITER $$
+CREATE PROCEDURE calcular_metricas_cliente(
+    IN p_id_cliente INT,
+    OUT p_total_movimentado DECIMAL(15,2),
+    OUT p_media_por_transacao DECIMAL(15,2),
+    OUT p_quantidade_transacoes INT
+)
+BEGIN
+    SELECT 
+        COALESCE(SUM(t.valor), 0),
+        COALESCE(AVG(t.valor), 0),
+        COUNT(t.id_transacao)
+    INTO 
+        p_total_movimentado,
+        p_media_por_transacao,
+        p_quantidade_transacoes
+    FROM transacao t
+    INNER JOIN conta c ON t.id_conta_origem = c.id_conta OR t.id_conta_destino = c.id_conta
+    WHERE c.id_cliente = p_id_cliente;
 END $$
 DELIMITER ;
 
@@ -398,6 +421,27 @@ BEGIN
 END $$
 DELIMITER ;
 
+-- Procedure para alterar telefone, completando a auditoria (RF2.4)
+DELIMITER $$
+CREATE PROCEDURE alterar_telefone_usuario(IN p_id_usuario INT, IN p_novo_telefone VARCHAR(15), IN p_id_usuario_responsavel INT)
+BEGIN
+    DECLARE v_telefone_antigo VARCHAR(15);
+
+    SELECT telefone INTO v_telefone_antigo FROM usuario WHERE id_usuario = p_id_usuario;
+
+    UPDATE usuario SET telefone = p_novo_telefone WHERE id_usuario = p_id_usuario;
+
+    INSERT INTO auditoria (id_usuario, acao, detalhes)
+    VALUES (p_id_usuario_responsavel, 'ALTERACAO_DADOS_CLIENTE',
+            JSON_OBJECT(
+                'id_usuario_afetado', p_id_usuario,
+                'campo_alterado', 'telefone',
+                'valor_antigo', v_telefone_antigo,
+                'valor_novo', p_novo_telefone
+            ));
+END $$
+DELIMITER ;
+
 -- Procedure pra tentativa de login (RF1.3)
 DELIMITER $$
 CREATE PROCEDURE registrar_tentativa_login(IN p_cpf_tentativa VARCHAR(11), IN p_sucesso BOOLEAN, IN p_info_adicional TEXT)
@@ -415,6 +459,16 @@ BEGIN
 
     INSERT INTO auditoria (id_usuario, acao, data_hora, detalhes)
     VALUES (v_id_usuario_tentativa, IF(p_sucesso, 'LOGIN_SUCESSO', 'LOGIN_FALHA'), NOW(), v_detalhes_json);
+END $$
+DELIMITER ;
+
+-- Procedure para registrar o logout do usuário (RF3.2)
+DELIMITER $$
+CREATE PROCEDURE registrar_logout_usuario(IN p_id_usuario INT)
+BEGIN
+    INSERT INTO auditoria (id_usuario, acao, detalhes)
+    VALUES (p_id_usuario, 'LOGOUT', 
+            JSON_OBJECT('resultado', 'Sessão encerrada.'));
 END $$
 DELIMITER ;
 
